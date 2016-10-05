@@ -1,4 +1,4 @@
 # TMU
-Tableau-Management-Utility (Aerospace Corportation Project)
+Tableau-Management-Utility (Aerospace Corporation Project)
 
 ### Project Summary
