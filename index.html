@@ -18,6 +18,12 @@
 
         // Create a viz object and embed it in the container div.
         var viz = new tableau.Viz(containerDiv, url, options); 
+
+        // reveal the iframe so that the login button will show
+        var iframe = viz._impl.$iframe;
+        iframe.style.width = window.innerWidth+'px';
+        iframe.style.height = window.innerHeight+'px';
+        iframe.style.visibility = "visible";
       }
     </script>
   </head>
