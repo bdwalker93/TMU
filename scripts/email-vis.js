@@ -74,6 +74,7 @@ function queryWorkbooksForUser(token, siteId, userId, callback) {
 
 function downloadVis(token, siteId, workbook, callback) {
   request({
+    encoding: null,
     url: `https://tableau.ics.uci.edu/api/2.3/sites/${siteId}/workbooks/${workbook}/previewImage`,
     headers: {
       "X-Tableau-Auth": token
