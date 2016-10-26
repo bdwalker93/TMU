@@ -2,21 +2,19 @@ var mappings = require('../mappings.json');
 var request = require('request');
 var xml2js = require('xml2js');
 
-signIn("keyvan", "ucitableau", "UCI", function(err, token, siteId, userId) {
+signIn("Brett", "ucitableau", "UCI", function(err, token, siteId, userId) {
   if (err) throw err;
 
   queryWorkbooksForUser(token, siteId, userId, function(err, workbooks) {
     if (err) throw err;
 
-    console.log(workbooks);
-    return;
+    var workbookId = workbooks[3].$.id;
 
-    var workbookId = "5ddd96b6-0682-47d1-b121-4141dce4ae86";
-
-    downloadVis(token, workbookId,, function(err, vis) {
+    downloadVis(token, siteId, workbookId, function(err, vis) {
       if (err) throw err;
 
-      console.log(vis);
+
+     console.log(vis);
     });
   });
 })
@@ -44,6 +42,9 @@ function signIn(name, password, site, callback) {
         var token = cred.$.token;
         var siteId = cred.site[0].$.id;
         var userId = cred.user[0].$.id;
+        
+        //console.log(JSON.stringify(cred, null, 4));
+        
         callback(null, token, siteId, userId);
       } catch (e) {
         callback(e);
@@ -64,15 +65,16 @@ function queryWorkbooksForUser(token, siteId, userId, callback) {
       console.log(response.statusCode);
     }
     xml2js.parseString(body, function(err, res) {
-      console.log(JSON.stringify(res, null, 4));
+      //console.log(JSON.stringify(res, null, 4));
+
+      callback(null, res.tsResponse.workbooks[0].workbook);
     });
   })
 }
 
-function downloadVis(token, workbook, callback) {
-  var site = "7bf28ce0-5d61-440a-91ee-ce26102c2738";
+function downloadVis(token, siteId, workbook, callback) {
   request({
-    url: `https://tableau.ics.uci.edu/api/2.3/sites/${site}/workbooks/${workbook}/previewImage`,
+    url: `https://tableau.ics.uci.edu/api/2.3/sites/${siteId}/workbooks/${workbook}/previewImage`,
     headers: {
       "X-Tableau-Auth": token
     }
@@ -81,6 +83,6 @@ function downloadVis(token, workbook, callback) {
     if (response.statusCode !== 200) {
       console.log(response.statusCode);
     }
-    console.log(body)
+    require('fs').writeFileSync('/tmp/image.png', body);
   })
 }
