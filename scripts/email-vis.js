@@ -10,11 +10,17 @@ signIn("Brett", "ucitableau", "UCI", function(err, token, siteId, userId) {
 
     var workbookId = workbooks[3].$.id;
 
-    downloadVis(token, siteId, workbookId, function(err, vis) {
-      if (err) throw err;
+    queryViewsForWorkbook(token, siteId, workbookId, function(err, views) {
 
+      var viewId = views[0].$.id;
 
-     console.log(vis);
+      queryViewPreviewImage(token, siteId, workbookId, viewId, function(err, pngBuffer) {
+        if (err) throw err;
+
+        var out = '/tmp/image.png';
+        require('fs').writeFileSync(out, pngBuffer);
+        console.log('wrote '+out);
+      });
     });
   });
 })
@@ -33,9 +39,7 @@ function signIn(name, password, site, callback) {
    ` 
   }, function (error, response, body) {
     if (error) return callback(error);
-    if (response.statusCode !== 200) {
-      return callback(new Error('not 200'));
-    }
+    if (response.statusCode !== 200) return callback(new Error(body));
     xml2js.parseString(body, function (err, result) {
       try {
         var cred = result.tsResponse.credentials[0];
@@ -61,29 +65,38 @@ function queryWorkbooksForUser(token, siteId, userId, callback) {
     }
   }, function (error, response, body) {
     if (error) return callback(error);
-    if (response.statusCode !== 200) {
-      console.log(response.statusCode);
-    }
+    if (response.statusCode !== 200) return callback(new Error(body));
     xml2js.parseString(body, function(err, res) {
-      //console.log(JSON.stringify(res, null, 4));
-
       callback(null, res.tsResponse.workbooks[0].workbook);
     });
   })
 }
 
-function downloadVis(token, siteId, workbook, callback) {
+function queryViewsForWorkbook(token, siteId, workbookId, callback) {
   request({
-    encoding: null,
-    url: `https://tableau.ics.uci.edu/api/2.3/sites/${siteId}/workbooks/${workbook}/previewImage`,
+    url: `https://tableau.ics.uci.edu/api/2.3/sites/${siteId}/workbooks/${workbookId}/views`,
     headers: {
       "X-Tableau-Auth": token
     }
   }, function (error, response, body) {
     if (error) return callback(error);
-    if (response.statusCode !== 200) {
-      console.log(response.statusCode);
+    if (response.statusCode !== 200) return callback(new Error(body));
+    xml2js.parseString(body, function(err, res) {
+      callback(null, res.tsResponse.views[0].view);
+    });
+  })
+}
+
+function queryViewPreviewImage(token, siteId, workbookId, viewId, callback) {
+  request({
+    encoding: null,
+    url: `https://tableau.ics.uci.edu/api/2.3/sites/${siteId}/workbooks/${workbookId}/views/${viewId}/previewImage`,
+    headers: {
+      "X-Tableau-Auth": token
     }
-    require('fs').writeFileSync('/tmp/image.png', body);
+  }, function (error, response, body) {
+    if (error) return callback(error);
+    if (response.statusCode !== 200) return callback(new Error(body));
+    return callback(null, body);
   })
 }
